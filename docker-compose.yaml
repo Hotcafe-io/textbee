@@ -11,8 +11,6 @@ services:
     volumes:
       # - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - mongodb_data:/data/db
-    ports:
-      - "${MONGO_PORT:-27018}:27017"
     networks:
       - textbee-network
     healthcheck:
@@ -27,8 +25,6 @@ services:
     container_name: textbee-mongo-express
     image: mongo-express:latest
     restart: always
-    ports:
-      - "${MONGO_EXPRESS_PORT:-8081}:8081"
     environment:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER:-adminUser}
       - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASS:-adminPassword}
@@ -47,8 +43,8 @@ services:
       context: ./api
       dockerfile: Dockerfile
     restart: always
-    ports:
-      - "${PORT:-3001}:3001"
+    expose:
+      - "3001"
     env_file:
       - path: ./.env
         required: false
@@ -77,8 +73,8 @@ services:
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
         NEXT_PUBLIC_APK_DOWNLOAD_URL: ${NEXT_PUBLIC_APK_DOWNLOAD_URL:-}
     restart: always
-    ports:
-      - "${PORT:-3000}:3000"
+    expose:
+      - "3000"
     env_file:
       - path: ./.env
         required: false
@@ -94,8 +90,6 @@ services:
     container_name: textbee-redis
     image: redis:alpine
     restart: always
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
