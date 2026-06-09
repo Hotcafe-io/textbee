@@ -1,0 +1,27 @@
+# Contexto enxuto para o build (context = raiz).
+.git
+.github
+.vscode
+.toolchain
+
+# segredos (NAO entram na imagem; valores vao por build-arg/env)
+.env
+**/.env
+firebase-service-account.json
+
+# node / next
+**/node_modules
+web/.next
+
+# android: so o codigo-fonte; nada de build/cache/config local
+android/.gradle
+android/build
+android/app/build
+android/local.properties
+android/captures
+android/.idea
+
+# artefatos
+*.apk
+web/public/*.apk
+*-monitor

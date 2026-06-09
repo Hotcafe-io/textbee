@@ -50,7 +50,8 @@ services:
     ports:
       - "${PORT:-3001}:3001"
     env_file:
-      - ./api/.env
+      - path: ./.env
+        required: false
     environment:
       - PORT=${PORT:-3001}
       - REDIS_URL=${REDIS_URL:-redis://textbee-redis:6379}
@@ -61,22 +62,28 @@ services:
     networks:
       - textbee-network
 
-  # Next.js Web
+  # Next.js Web (+ builda o APK Android no multi-stage e serve em /sms-sender.apk)
   textbee-web:
     container_name: textbee-web
-    # image: ghcr.io/vernu/textbee/web:latest
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        # APK
+        API_BASE_URL: ${API_BASE_URL:-https://api.example.com/api/v1/}
+        GOOGLE_SERVICES_JSON_B64: ${GOOGLE_SERVICES_JSON_B64:-}
+        # Next (fixados em build-time)
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001/api/v1}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_APK_DOWNLOAD_URL: ${NEXT_PUBLIC_APK_DOWNLOAD_URL:-}
     restart: always
     ports:
       - "${PORT:-3000}:3000"
     env_file:
-      - ./web/.env
+      - path: ./.env
+        required: false
     environment:
       - PORT=${PORT:-3000}
-      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001/api/v1}
-
     depends_on:
       - textbee-api
     networks:
