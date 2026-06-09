@@ -11,7 +11,8 @@ export const Routes = {
 
   dashboard: '/dashboard',
 
-  downloadAndroidApp: '/sms-sender.apk',
+  downloadAndroidApp:
+    process.env.NEXT_PUBLIC_APK_DOWNLOAD_URL || '/sms-sender.apk',
   privacyPolicy: 'https://textbee.dev/privacy-policy',
   refundPolicy: 'https://textbee.dev/refund-policy',
   termsOfService: 'https://textbee.dev/terms-of-service',

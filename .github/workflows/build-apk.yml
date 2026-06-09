@@ -1,0 +1,72 @@
+name: Build APK
+
+# Builda o APK (flavor prod) e publica numa Release do proprio repo.
+# O link de download do dashboard aponta pra:
+#   https://github.com/<owner>/<repo>/releases/latest/download/sms-sender.apk
+#
+# Pre-requisitos (Settings do repo):
+#   - Secret  GOOGLE_SERVICES_JSON_B64  = base64 do android/app/google-services.json
+#   - Variable API_BASE_URL             = https://SEU-API/api/v1/   (com barra no fim)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar platform + build-tools
+        run: sdkmanager "platforms;android-32" "build-tools;32.0.0"
+
+      - name: Restaurar google-services.json (secret base64)
+        run: |
+          if [ -z "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" ]; then
+            echo "::error::Secret GOOGLE_SERVICES_JSON_B64 nao definido"; exit 1
+          fi
+          echo "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" | base64 -d > android/app/google-services.json
+
+      - name: Debug keystore (release assina com debug key p/ sideload)
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -v -keystore ~/.android/debug.keystore \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Build APK (prod release)
+        working-directory: android
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleProdRelease --no-daemon
+          cd ..
+          cp android/app/build/outputs/apk/prod/release/app-prod-release.apk sms-sender.apk
+
+      - name: Publicar na Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-release
+          name: SMS Sender APK
+          body: APK do app Android (flavor prod) gerado automaticamente a partir do main.
+          make_latest: true
+          files: sms-sender.apk
