@@ -113,5 +113,8 @@ RUN pnpm install --prod --frozen-lockfile
 
 USER nextjs
 ENV PORT=3000
+# Next standalone bina no HOSTNAME (o Docker seta = id do container). Forca 0.0.0.0
+# pra ser alcancavel pelo host e pelo Traefik do Dokploy.
+ENV HOSTNAME=0.0.0.0
 EXPOSE ${PORT}
 CMD ["node", "server"]
