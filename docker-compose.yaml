@@ -47,6 +47,8 @@ services:
     environment:
       - PORT=${PORT:-3001}
       - REDIS_URL=${REDIS_URL:-redis://textbee-redis:6379}
+      # derivada do root user/pass -> sempre bate com o Mongo (sem mismatch)
+      - MONGO_URI=mongodb://${MONGO_ROOT_USER:-adminUser}:${MONGO_ROOT_PASS:-adminPassword}@textbee-db:27017/textbee?authSource=admin
     depends_on:
       textbee-db:
         condition: service_healthy
@@ -82,6 +84,8 @@ services:
         required: false
     environment:
       - PORT=${PORT:-3000}
+      # derivada do root user/pass -> sempre bate com o Mongo (sem mismatch)
+      - DATABASE_URL=mongodb://${MONGO_ROOT_USER:-adminUser}:${MONGO_ROOT_PASS:-adminPassword}@textbee-db:27017/textbee?authSource=admin
     depends_on:
       - textbee-api
     networks:
