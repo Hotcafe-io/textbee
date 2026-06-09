@@ -3,6 +3,24 @@ plugins {
     id 'com.google.firebase.crashlytics'
 }
 
+// URL base da API: lida do env API_BASE_URL ou do .env na raiz do repo.
+// Nao versionar dominio aqui — defina API_BASE_URL no .env (placeholder usado em forks).
+def resolveApiBaseUrl = {
+    def fromEnv = System.getenv('API_BASE_URL')
+    if (fromEnv != null && fromEnv.trim()) return fromEnv.trim()
+    def envFile = new File(rootProject.projectDir.parentFile, '.env')
+    if (envFile.exists()) {
+        def line = envFile.readLines().find { it.trim().startsWith('API_BASE_URL=') }
+        if (line) {
+            def val = line.substring(line.indexOf('=') + 1).trim()
+            if (val.startsWith('"') && val.endsWith('"')) val = val[1..-2]
+            if (val) return val
+        }
+    }
+    return 'https://api.example.com/api/v1/'
+}
+def apiBaseUrl = resolveApiBaseUrl()
+
 android {
     compileSdk 32
 
@@ -58,9 +76,9 @@ android {
         prod {
             dimension "environment"
             applicationId "com.vernu.sms"
-            buildConfigField "String", "API_BASE_URL", '"https://api.textbee.dev/api/v1/"'
+            buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrl}\""
             buildConfigField "String", "ENVIRONMENT", '"production"'
-            resValue "string", "app_name", "textbee.dev"
+            resValue "string", "app_name", "SMS Sender"
         }
     }
 

@@ -54,22 +54,35 @@ async function bootstrap() {
     },
   })
 
-  const firebaseConfig = {
-    type: 'service_account',
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    clientId: process.env.FIREBASE_CLIENT_ID,
-    authUri: 'https://accounts.google.com/o/oauth2/auth',
-    tokenUri: 'https://oauth2.googleapis.com/token',
-    authProviderX509CertUrl: 'https://www.googleapis.com/oauth2/v1/certs',
-    clientC509CertUrl: process.env.FIREBASE_CLIENT_C509_CERT_URL,
-  }
+  // Firebase (FCM) is optional: only initialize when credentials are provided.
+  // Without it the API still boots; real-time push to the Android device is disabled.
+  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
+    const firebaseConfig = {
+      type: 'service_account',
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      clientId: process.env.FIREBASE_CLIENT_ID,
+      authUri: 'https://accounts.google.com/o/oauth2/auth',
+      tokenUri: 'https://oauth2.googleapis.com/token',
+      authProviderX509CertUrl: 'https://www.googleapis.com/oauth2/v1/certs',
+      clientC509CertUrl: process.env.FIREBASE_CLIENT_C509_CERT_URL,
+    }
 
-  firebase.initializeApp({
-    credential: firebase.credential.cert(firebaseConfig),
-  })
+    try {
+      firebase.initializeApp({
+        credential: firebase.credential.cert(firebaseConfig),
+      })
+      logger.log('Firebase initialized')
+    } catch (err) {
+      logger.error('Failed to initialize Firebase; push notifications disabled', err)
+    }
+  } else {
+    logger.warn(
+      'FIREBASE_PROJECT_ID/FIREBASE_PRIVATE_KEY not set — skipping Firebase init (push notifications disabled)',
+    )
+  }
 
   app.use(
     '/api/v1/billing/webhook/polar',

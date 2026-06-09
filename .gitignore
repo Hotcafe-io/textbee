@@ -3,3 +3,18 @@
 *-monitor
 
 .cursor
+
+# Segredos / config local (NAO commitar)
+.env
+*/.env
+firebase-service-account.json
+android/app/google-services.json
+android/app/src/*/google-services.json
+
+# Toolchain Android local (JDK/SDK baixados)
+.toolchain/
+
+# APKs buildados (regenerados pelo service-up.sh; embutem config do Firebase)
+*.apk
+web/public/*.apk
+/.vscode
