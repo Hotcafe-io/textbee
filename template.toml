@@ -1,0 +1,65 @@
+# Dokploy template — SMS Sender (TextBee self-hosted)
+#
+# Gera os segredos automaticamente e monta as 2 URLs (web + api). Voce so
+# precisa, DEPOIS de subir, preencher as vars FIREBASE_* e GOOGLE_SERVICES_JSON_B64
+# (do seu projeto Firebase) pra ligar o push e o build do APK.
+#
+# Deploy no Dokploy: crie um servico "Compose" com provider Git apontando para
+# este repo (build a partir do docker-compose.yaml). Aplique este template pra
+# popular o Environment.
+
+[variables]
+web_domain  = "${domain}"
+api_domain  = "${domain}"
+mongo_pass  = "${password:32}"
+jwt_secret  = "${base64:64}"
+auth_secret = "${base64:32}"
+
+[config]
+
+[[config.domains]]
+serviceName = "textbee-web"
+port = 3000
+host = "${web_domain}"
+
+[[config.domains]]
+serviceName = "textbee-api"
+port = 3001
+host = "${api_domain}"
+
+[config.env]
+# --- MongoDB ---
+MONGO_ROOT_USER = "adminUser"
+MONGO_ROOT_PASS = "${mongo_pass}"
+MONGO_URI = "mongodb://adminUser:${mongo_pass}@textbee-db:27017/textbee?authSource=admin"
+DATABASE_URL = "mongodb://adminUser:${mongo_pass}@textbee-db:27017/textbee?authSource=admin"
+
+# --- Dominios ---
+WEB_URL = "https://${web_domain}"
+FRONTEND_URL = "https://${web_domain}"
+API_BASE_URL = "https://${api_domain}/api/v1/"
+NEXTAUTH_URL = "https://${web_domain}"
+NEXT_PUBLIC_API_BASE_URL = "https://${api_domain}/api/v1"
+NEXT_PUBLIC_SITE_URL = "https://${web_domain}"
+
+# --- API ---
+JWT_SECRET = "${jwt_secret}"
+JWT_EXPIRATION = "60d"
+USE_SMS_QUEUE = "false"
+REDIS_URL = "redis://textbee-redis:6379"
+CLOUDFLARE_TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA"
+
+# --- Web (NextAuth) ---
+AUTH_SECRET = "${auth_secret}"
+NEXTAUTH_SECRET = "${auth_secret}"
+NEXT_PUBLIC_TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+
+# --- Firebase (preencher depois pra ligar push + build do APK) ---
+FIREBASE_PROJECT_ID = ""
+FIREBASE_PRIVATE_KEY_ID = ""
+FIREBASE_PRIVATE_KEY = ""
+FIREBASE_CLIENT_EMAIL = ""
+FIREBASE_CLIENT_ID = ""
+FIREBASE_CLIENT_C509_CERT_URL = ""
+# base64 do android/app/google-services.json (base64 -w0 ...)
+GOOGLE_SERVICES_JSON_B64 = ""

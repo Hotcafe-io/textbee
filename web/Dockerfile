@@ -30,20 +30,25 @@ ARG API_BASE_URL=https://api.example.com/api/v1/
 ARG GOOGLE_SERVICES_JSON_B64=
 ENV API_BASE_URL=${API_BASE_URL}
 
-RUN set -eux; \
+# APK opcional: se nao houver google-services.json (nem via base64), pula o
+# build pra o deploy nao quebrar — gera placeholder; configure o Firebase e
+# refaca o deploy pra ter o APK de verdade.
+RUN --mount=type=cache,target=/root/.gradle set -eux; \
     if [ -n "$GOOGLE_SERVICES_JSON_B64" ]; then \
       echo "$GOOGLE_SERVICES_JSON_B64" | base64 -d > android/app/google-services.json; \
     fi; \
-    test -f android/app/google-services.json || { \
-      echo "ERRO: android/app/google-services.json ausente. Defina GOOGLE_SERVICES_JSON_B64 (base64) no build."; exit 1; }; \
-    mkdir -p /root/.android; \
-    keytool -genkeypair -v -keystore /root/.android/debug.keystore -storepass android \
-      -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
-      -dname "CN=Android Debug,O=Android,C=US"
-
-RUN --mount=type=cache,target=/root/.gradle \
-    cd android && chmod +x gradlew && ./gradlew assembleProdRelease --no-daemon
-RUN cp android/app/build/outputs/apk/prod/release/app-prod-release.apk /sms-sender.apk
+    if [ -f android/app/google-services.json ]; then \
+      mkdir -p /root/.android; \
+      keytool -genkeypair -v -keystore /root/.android/debug.keystore -storepass android \
+        -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+        -dname "CN=Android Debug,O=Android,C=US"; \
+      ( cd android && chmod +x gradlew && ./gradlew assembleProdRelease --no-daemon ); \
+      cp android/app/build/outputs/apk/prod/release/app-prod-release.apk /sms-sender.apk; \
+      echo "APK buildado com sucesso."; \
+    else \
+      echo "AVISO: sem google-services.json/GOOGLE_SERVICES_JSON_B64 -> APK nao buildado."; \
+      printf 'APK indisponivel: configure o Firebase (GOOGLE_SERVICES_JSON_B64) e refaca o deploy.\n' > /sms-sender.apk; \
+    fi
 
 # ============================ Stage 1: deps ============================
 FROM node:22-alpine AS deps
