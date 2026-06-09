@@ -25,17 +25,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup JDK 11
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '11'
-
+      # Android SDK primeiro: o sdkmanager (cmdline-tools) exige Java 17+,
+      # entao roda com o Java padrao do runner ANTES de trocar pro JDK 11.
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Instalar platform + build-tools
         run: sdkmanager "platforms;android-32" "build-tools;32.0.0"
+
+      # JDK 11 para o Gradle (AGP 7.1.2 / Gradle 7.2 nao roda em Java 17+).
+      - name: Setup JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
 
       - name: Restaurar google-services.json (secret base64)
         run: |
