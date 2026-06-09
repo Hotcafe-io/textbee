@@ -23,6 +23,8 @@ docker compose version >/dev/null 2>&1 || { echo "'docker compose' indisponivel"
 
 log "Subindo a stack (docker compose up -d --build)"
 echo "    (1a vez builda o APK no Docker — baixa o Android SDK, leva alguns minutos)"
+# a dokploy-network e externa (criada pelo Dokploy em prod); cria localmente se faltar
+docker network create dokploy-network >/dev/null 2>&1 || true
 # local: carrega o override que expoe as portas no host (em prod/Dokploy nao se usa)
 DOCKER_BUILDKIT=1 docker compose -f docker-compose.yaml -f docker-compose.local.yml up -d --build
 

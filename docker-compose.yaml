@@ -1,7 +1,6 @@
 services:
   # MongoDB service
   textbee-db:
-    container_name: textbee-db
     image: mongo:latest
     restart: always
     environment:
@@ -20,9 +19,8 @@ services:
       retries: 3
       start_period: 20s
 
-  # MongoDB Express (optional admin UI)
+  # MongoDB Express (optional admin UI) — interno; exponha via dominio se quiser
   mongo-express:
-    container_name: textbee-mongo-express
     image: mongo-express:latest
     restart: always
     environment:
@@ -37,8 +35,6 @@ services:
 
   # NestJS API
   textbee-api:
-    container_name: textbee-api
-    # image: ghcr.io/vernu/textbee/api:latest
     build:
       context: ./api
       dockerfile: Dockerfile
@@ -51,16 +47,15 @@ services:
     environment:
       - PORT=${PORT:-3001}
       - REDIS_URL=${REDIS_URL:-redis://textbee-redis:6379}
-
     depends_on:
       textbee-db:
         condition: service_healthy
     networks:
       - textbee-network
+      - dokploy-network
 
   # Next.js Web (+ builda o APK Android no multi-stage e serve em /sms-sender.apk)
   textbee-web:
-    container_name: textbee-web
     build:
       context: .
       dockerfile: web/Dockerfile
@@ -84,10 +79,10 @@ services:
       - textbee-api
     networks:
       - textbee-network
+      - dokploy-network
 
   # Redis (if SMS queue is needed)
   textbee-redis:
-    container_name: textbee-redis
     image: redis:alpine
     restart: always
     volumes:
@@ -105,7 +100,11 @@ services:
 networks:
   textbee-network:
     driver: bridge
+  # rede do Traefik do Dokploy (criada pelo Dokploy). Local: o service-up.sh
+  # cria ela com 'docker network create dokploy-network' antes de subir.
+  dokploy-network:
+    external: true
 
 volumes:
   mongodb_data:
-  redis_data: 
+  redis_data:
